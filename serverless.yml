@@ -1,0 +1,51 @@
+service: territory-marker
+
+provider:
+  name: aws
+  runtime: go1.x
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - "Fn::GetAtt": [territories, Arn]
+
+environment:
+  TABLE_NAME:
+    Ref: territories
+
+package:
+  patterns:
+    - "!./**"
+    - "./src/**"
+
+functions:
+  listTerritories:
+    handler: main
+    events:
+      - http:
+          path: territories/list
+          method: get
+          cors: true
+
+resources:
+  - Resources:
+      territories:
+        Type: AWS::DynamoDB::Table
+        Properties:
+          TableName: territories
+          AttributeDefinitions:
+            - AttributeName: name
+              AttributeType: S
+          KeySchema:
+            - AttributeName: name
+              KeyType: HASH
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
