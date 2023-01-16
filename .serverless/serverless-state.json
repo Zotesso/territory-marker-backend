@@ -30,7 +30,6 @@
         }
       ],
       "stage": "dev",
-      "variableSyntax": "\\${([^{}:]+?(?:\\(|:)(?:[^:{}][^{}]*?)?)}",
       "region": "us-east-1",
       "versionFunctions": true,
       "compiledCloudFormationTemplate": {
@@ -199,7 +198,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/territory-marker/dev/1671651792212-2022-12-21T19:43:12.212Z/territory-marker.zip"
+                "S3Key": "serverless/territory-marker/dev/1673828180082-2023-01-16T00:16:20.082Z/territory-marker.zip"
               },
               "Handler": "main",
               "Runtime": "go1.x",
@@ -217,14 +216,14 @@
               "ListTerritoriesLogGroup"
             ]
           },
-          "ListTerritoriesLambdaVersionOCcw8ADb96dto88RiHWyrpGCphZpnJMFnYEam6htpY": {
+          "ListTerritoriesLambdaVersion5Iqk1FGnUYyPHdAKU5vPHpSs9zE7niuMutyOc6wNA": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ListTerritoriesLambdaFunction"
               },
-              "CodeSha256": "ZBe5yXH0d8KzzpwoE0natnMtPDop3YZB4QJsBkUndDA="
+              "CodeSha256": "2nChlsvBJVDhexnquQM/J9XhpkSX3qM3qOXCzZT3U5I="
             }
           },
           "ApiGatewayRestApi": {
@@ -239,7 +238,7 @@
               "Policy": ""
             }
           },
-          "ApiGatewayResourceTerritories": {
+          "ApiGatewayResourceTerritoryDashlist": {
             "Type": "AWS::ApiGateway::Resource",
             "Properties": {
               "ParentId": {
@@ -248,25 +247,13 @@
                   "RootResourceId"
                 ]
               },
-              "PathPart": "territories",
+              "PathPart": "territory-list",
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
             }
           },
-          "ApiGatewayResourceTerritoriesList": {
-            "Type": "AWS::ApiGateway::Resource",
-            "Properties": {
-              "ParentId": {
-                "Ref": "ApiGatewayResourceTerritories"
-              },
-              "PathPart": "list",
-              "RestApiId": {
-                "Ref": "ApiGatewayRestApi"
-              }
-            }
-          },
-          "ApiGatewayMethodTerritoriesListOptions": {
+          "ApiGatewayMethodTerritoryDashlistOptions": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
               "AuthorizationType": "NONE",
@@ -294,30 +281,30 @@
                     "StatusCode": "200",
                     "ResponseParameters": {
                       "method.response.header.Access-Control-Allow-Origin": "'*'",
-                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                      "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
                       "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
                     },
                     "ResponseTemplates": {
-                      "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
+                      "application/json": ""
                     }
                   }
                 ]
               },
               "ResourceId": {
-                "Ref": "ApiGatewayResourceTerritoriesList"
+                "Ref": "ApiGatewayResourceTerritoryDashlist"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
               }
             }
           },
-          "ApiGatewayMethodTerritoriesListGet": {
+          "ApiGatewayMethodTerritoryDashlistGet": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
               "HttpMethod": "GET",
               "RequestParameters": {},
               "ResourceId": {
-                "Ref": "ApiGatewayResourceTerritoriesList"
+                "Ref": "ApiGatewayResourceTerritoryDashlist"
               },
               "RestApiId": {
                 "Ref": "ApiGatewayRestApi"
@@ -352,9 +339,12 @@
                 }
               },
               "MethodResponses": []
-            }
+            },
+            "DependsOn": [
+              "ListTerritoriesLambdaPermissionApiGateway"
+            ]
           },
-          "ApiGatewayDeployment1671651790535": {
+          "ApiGatewayDeployment1673828176272": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -363,8 +353,8 @@
               "StageName": "dev"
             },
             "DependsOn": [
-              "ApiGatewayMethodTerritoriesListOptions",
-              "ApiGatewayMethodTerritoriesListGet"
+              "ApiGatewayMethodTerritoryDashlistOptions",
+              "ApiGatewayMethodTerritoryDashlistGet"
             ]
           },
           "ListTerritoriesLambdaPermissionApiGateway": {
@@ -410,14 +400,22 @@
               "TableName": "territories",
               "AttributeDefinitions": [
                 {
+                  "AttributeName": "id",
+                  "AttributeType": "N"
+                },
+                {
                   "AttributeName": "name",
                   "AttributeType": "S"
                 }
               ],
               "KeySchema": [
                 {
-                  "AttributeName": "name",
+                  "AttributeName": "id",
                   "KeyType": "HASH"
+                },
+                {
+                  "AttributeName": "name",
+                  "KeyType": "RANGE"
                 }
               ],
               "ProvisionedThroughput": {
@@ -439,7 +437,7 @@
           "ListTerritoriesLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ListTerritoriesLambdaVersionOCcw8ADb96dto88RiHWyrpGCphZpnJMFnYEam6htpY"
+              "Ref": "ListTerritoriesLambdaVersion5Iqk1FGnUYyPHdAKU5vPHpSs9zE7niuMutyOc6wNA"
             },
             "Export": {
               "Name": "sls-territory-marker-dev-ListTerritoriesLambdaFunctionQualifiedArn"
@@ -564,12 +562,9 @@
         "events": [
           {
             "http": {
-              "path": "territories/list",
+              "path": "territory-list",
               "method": "get",
               "cors": {
-                "origins": [
-                  "*"
-                ],
                 "origin": "*",
                 "methods": [
                   "OPTIONS",
@@ -581,7 +576,8 @@
                   "Authorization",
                   "X-Api-Key",
                   "X-Amz-Security-Token",
-                  "X-Amz-User-Agent"
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
                 ],
                 "allowCredentials": false
               },
@@ -595,7 +591,7 @@
         "timeout": 6,
         "runtime": "go1.x",
         "vpc": {},
-        "versionLogicalId": "ListTerritoriesLambdaVersionOCcw8ADb96dto88RiHWyrpGCphZpnJMFnYEam6htpY"
+        "versionLogicalId": "ListTerritoriesLambdaVersion5Iqk1FGnUYyPHdAKU5vPHpSs9zE7niuMutyOc6wNA"
       }
     },
     "resources": {
@@ -606,14 +602,22 @@
             "TableName": "territories",
             "AttributeDefinitions": [
               {
+                "AttributeName": "id",
+                "AttributeType": "N"
+              },
+              {
                 "AttributeName": "name",
                 "AttributeType": "S"
               }
             ],
             "KeySchema": [
               {
-                "AttributeName": "name",
+                "AttributeName": "id",
                 "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "name",
+                "KeyType": "RANGE"
               }
             ],
             "ProvisionedThroughput": {
@@ -627,11 +631,8 @@
     },
     "configValidationMode": "warn",
     "serviceFilename": "serverless.yml",
-    "layers": {},
     "initialServerlessConfig": {
-      "service": {
-        "$ref": "$[\"service\"][\"serviceObject\"]"
-      },
+      "service": "territory-marker",
       "provider": {
         "$ref": "$[\"service\"][\"provider\"]"
       },
@@ -645,8 +646,9 @@
           "!./**",
           "./src/**"
         ],
-        "artifact": "/home/pedro/Documents/Github/territory-marker/.serverless/territory-marker.zip",
-        "artifactDirectoryName": "serverless/territory-marker/dev/1671651792212-2022-12-21T19:43:12.212Z"
+        "artifactsS3KeyDirname": "serverless/territory-marker/dev/code-artifacts",
+        "artifact": "C:\\Users\\linux user\\Documents\\www\\territory-marker-backend\\.serverless\\territory-marker.zip",
+        "artifactDirectoryName": "serverless/territory-marker/dev/1673828180082-2023-01-16T00:16:20.082Z"
       },
       "functions": {
         "$ref": "$[\"service\"][\"functions\"]"
@@ -655,11 +657,12 @@
         "$ref": "$[\"service\"][\"resources\"]"
       }
     },
+    "layers": {},
     "isDashboardMonitoringPreconfigured": false,
-    "artifact": "/home/pedro/Documents/Github/territory-marker/.serverless/territory-marker.zip"
+    "artifact": "C:\\Users\\linux user\\Documents\\www\\territory-marker-backend\\.serverless\\territory-marker.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/territory-marker/dev/1671651792212-2022-12-21T19:43:12.212Z",
+    "artifactDirectoryName": "serverless/territory-marker/dev/1673828180082-2023-01-16T00:16:20.082Z",
     "artifact": "territory-marker.zip"
   }
 }
