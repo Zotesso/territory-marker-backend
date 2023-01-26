@@ -18,6 +18,7 @@ type Territory struct {
 	Polylines string `json:"polylines"`
 	Last_worked_date string `json:"last_worked_date"`
 	Last_given_date string `json:"last_given_date"`
+	Owner string `json:"owner"`
 }
 
 const tableName = "territories"
@@ -39,7 +40,11 @@ func main() {
 }
 
 func handler(request events.APIGatewayProxyRequest) (*events.APIGatewayProxyResponse, error) {
-	resp := events.APIGatewayProxyResponse{Headers: map[string]string{"Content-Type":"application/json"}}
+	resp := events.APIGatewayProxyResponse{Headers: map[string]string{
+		"Content-Type":"application/json",
+		"Access-Control-Allow-Origin":"*",
+		"Access-Control-Allow-Credentials":"true",
+	}}
 
 	input := &dynamodb.ScanInput {
 		TableName: aws.String(tableName),
