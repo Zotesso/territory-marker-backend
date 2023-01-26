@@ -77,6 +77,12 @@
         "LogGroupName": "/aws/lambda/territory-marker-dev-listTerritories"
       }
     },
+    "UpdateTerritoryLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/territory-marker-dev-updateTerritory"
+      }
+    },
     "IamRoleLambdaExecution": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -181,9 +187,9 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/territory-marker/dev/1673828180082-2023-01-16T00:16:20.082Z/territory-marker.zip"
+          "S3Key": "serverless/territory-marker/dev/1674701651541-2023-01-26T02:54:11.541Z/territory-marker.zip"
         },
-        "Handler": "main",
+        "Handler": "src/territory-update/territory-list",
         "Runtime": "go1.x",
         "FunctionName": "territory-marker-dev-listTerritories",
         "MemorySize": 1024,
@@ -199,14 +205,49 @@
         "ListTerritoriesLogGroup"
       ]
     },
-    "ListTerritoriesLambdaVersion5Iqk1FGnUYyPHdAKU5vPHpSs9zE7niuMutyOc6wNA": {
+    "UpdateTerritoryLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/territory-marker/dev/1674701651541-2023-01-26T02:54:11.541Z/territory-marker.zip"
+        },
+        "Handler": "src/territory-update/main",
+        "Runtime": "go1.x",
+        "FunctionName": "territory-marker-dev-updateTerritory",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "UpdateTerritoryLogGroup"
+      ]
+    },
+    "ListTerritoriesLambdaVersionHsH65uBJbHf4EvfCIyyMAb5BQBOcguEDKE8M7JD7V4o": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "ListTerritoriesLambdaFunction"
         },
-        "CodeSha256": "2nChlsvBJVDhexnquQM/J9XhpkSX3qM3qOXCzZT3U5I="
+        "CodeSha256": "pERUEYEZxo43rcGVUA+ZEJLdJoGNTWdm4B1zt6X6yAs="
+      }
+    },
+    "UpdateTerritoryLambdaVersionIsPYTBrUcf6QMXqOLwB1thZxIkNStJz2aQuOGjEwZF4": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "UpdateTerritoryLambdaFunction"
+        },
+        "CodeSha256": "pERUEYEZxo43rcGVUA+ZEJLdJoGNTWdm4B1zt6X6yAs="
       }
     },
     "ApiGatewayRestApi": {
@@ -221,7 +262,7 @@
         "Policy": ""
       }
     },
-    "ApiGatewayResourceTerritoryDashlist": {
+    "ApiGatewayResourceTerritory": {
       "Type": "AWS::ApiGateway::Resource",
       "Properties": {
         "ParentId": {
@@ -230,13 +271,25 @@
             "RootResourceId"
           ]
         },
-        "PathPart": "territory-list",
+        "PathPart": "territory",
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
         }
       }
     },
-    "ApiGatewayMethodTerritoryDashlistOptions": {
+    "ApiGatewayResourceTerritoryList": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "ApiGatewayResourceTerritory"
+        },
+        "PathPart": "list",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodTerritoryListOptions": {
       "Type": "AWS::ApiGateway::Method",
       "Properties": {
         "AuthorizationType": "NONE",
@@ -264,30 +317,75 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
         },
         "ResourceId": {
-          "Ref": "ApiGatewayResourceTerritoryDashlist"
+          "Ref": "ApiGatewayResourceTerritoryList"
         },
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
         }
       }
     },
-    "ApiGatewayMethodTerritoryDashlistGet": {
+    "ApiGatewayMethodTerritoryOptions": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true
+            },
+            "ResponseModels": {}
+          }
+        ],
+        "RequestParameters": {},
+        "Integration": {
+          "Type": "MOCK",
+          "RequestTemplates": {
+            "application/json": "{statusCode:200}"
+          },
+          "ContentHandling": "CONVERT_TO_TEXT",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,PUT'"
+              },
+              "ResponseTemplates": {
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
+              }
+            }
+          ]
+        },
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceTerritory"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodTerritoryListGet": {
       "Type": "AWS::ApiGateway::Method",
       "Properties": {
         "HttpMethod": "GET",
         "RequestParameters": {},
         "ResourceId": {
-          "Ref": "ApiGatewayResourceTerritoryDashlist"
+          "Ref": "ApiGatewayResourceTerritoryList"
         },
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
@@ -322,12 +420,52 @@
           }
         },
         "MethodResponses": []
-      },
-      "DependsOn": [
-        "ListTerritoriesLambdaPermissionApiGateway"
-      ]
+      }
     },
-    "ApiGatewayDeployment1673828176272": {
+    "ApiGatewayMethodTerritoryPut": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "PUT",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceTerritory"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "UpdateTerritoryLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      }
+    },
+    "ApiGatewayDeployment1674701649075": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -336,8 +474,10 @@
         "StageName": "dev"
       },
       "DependsOn": [
-        "ApiGatewayMethodTerritoryDashlistOptions",
-        "ApiGatewayMethodTerritoryDashlistGet"
+        "ApiGatewayMethodTerritoryListOptions",
+        "ApiGatewayMethodTerritoryOptions",
+        "ApiGatewayMethodTerritoryListGet",
+        "ApiGatewayMethodTerritoryPut"
       ]
     },
     "ListTerritoriesLambdaPermissionApiGateway": {
@@ -346,6 +486,43 @@
         "FunctionName": {
           "Fn::GetAtt": [
             "ListTerritoriesLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "UpdateTerritoryLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "UpdateTerritoryLambdaFunction",
             "Arn"
           ]
         },
@@ -420,10 +597,19 @@
     "ListTerritoriesLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "ListTerritoriesLambdaVersion5Iqk1FGnUYyPHdAKU5vPHpSs9zE7niuMutyOc6wNA"
+        "Ref": "ListTerritoriesLambdaVersionHsH65uBJbHf4EvfCIyyMAb5BQBOcguEDKE8M7JD7V4o"
       },
       "Export": {
         "Name": "sls-territory-marker-dev-ListTerritoriesLambdaFunctionQualifiedArn"
+      }
+    },
+    "UpdateTerritoryLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "UpdateTerritoryLambdaVersionIsPYTBrUcf6QMXqOLwB1thZxIkNStJz2aQuOGjEwZF4"
+      },
+      "Export": {
+        "Name": "sls-territory-marker-dev-UpdateTerritoryLambdaFunctionQualifiedArn"
       }
     },
     "ServiceEndpoint": {

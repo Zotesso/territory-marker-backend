@@ -27,11 +27,18 @@ package:
 
 functions:
   listTerritories:
-    handler: main
+    handler: src/territory-update/territory-list
     events:
       - http:
-          path: territory-list
+          path: territory/list
           method: get
+          cors: true
+  updateTerritory:
+    handler: src/territory-update/main
+    events:
+      - http:
+          path: territory
+          method: put
           cors: true
 
 resources:
